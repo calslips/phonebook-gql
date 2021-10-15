@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/calslips/phonebook-gql/issues"
   },
-  "homepage": "https://github.com/calslips/phonebook-gql#readme"
+  "homepage": "https://github.com/calslips/phonebook-gql#readme",
+  "dependencies": {
+    "apollo-server": "^3.4.0",
+    "graphql": "^15.6.1"
+  }
 }
