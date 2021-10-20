@@ -18,6 +18,8 @@
   "homepage": "https://github.com/calslips/phonebook-gql#readme",
   "dependencies": {
     "apollo-server": "^3.4.0",
-    "graphql": "^15.6.1"
+    "graphql": "^15.6.1",
+    "mongoose": "^6.0.11",
+    "mongoose-unique-validator": "^3.0.0"
   }
 }
