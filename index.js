@@ -75,6 +75,9 @@ const typeDefs = gql`
       username: String!
       password: String!
     ): Token
+    addAsFriend(
+      name: String!
+    ): User
   }
 `
 
@@ -99,11 +102,18 @@ const resolvers = {
     }
   },
   Mutation: {
-    addPerson: async (root, args) => {
+    addPerson: async (root, args, context) => {
       const person = new Person({ ...args })
+      const currentUser = context.currentUser
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authenticated")
+      }
 
       try {
         await person.save()
+        currentUser.friends = currentUser.friends.concat(person)
+        await currentUser.save()
       } catch (error) {
         throw new UserInputError(error.message, {
           invalidArgs: args
@@ -147,6 +157,22 @@ const resolvers = {
       }
 
       return { value: jwt.sign(tokenPayload, JWT_SECRET)}
+    },
+    addAsFriend: async (root, args, { currentUser }) => {
+      const notFriendYet = (person) =>
+        !currentUser.friends.map((f) => f._id).includes(person._id)
+
+      if (!currentUser) {
+        throw new AuthenticationError("not authorized")
+      }
+
+      const person = await Person.findOne({ name: args.name })
+      if (notFriendYet(person)) {
+        currentUser.friends = currentUser.friends.concat(person)
+      }
+
+      await currentUser.save()
+      return currentUser
     }
   }
 };
