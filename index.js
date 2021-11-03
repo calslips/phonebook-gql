@@ -1,7 +1,10 @@
 const { ApolloServer, UserInputError, AuthenticationError, gql } = require('apollo-server-express')
 const { ApolloServerPluginDrainHttpServer } = require('apollo-server-core')
 const express = require('express')
-const http = require('http')
+const { createServer } = require('http')
+const { execute, subscribe } = require('graphql')
+const { SubscriptionServer } = require('subscriptions-transport-ws')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 const Person = require('./models/person')
@@ -180,15 +183,30 @@ const resolvers = {
   }
 };
 
-const startApolloServer = (async (typeDefs, resolvers) => {
+const startApolloServer = (async () => {
   const app = express()
-  const httpServer = http.createServer(app)
+  const httpServer = createServer(app)
 
+  const schema = makeExecutableSchema({ typeDefs, resolvers })
+
+  const subscriptionServer = SubscriptionServer.create(
+    { schema, execute, subscribe },
+    { server: httpServer, path: '/'}
+  )
 
   const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    schema,
+    plugins: [
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              subscriptionServer.close()
+            }
+          }
+        }
+      }
+    ],
     context: async ({ req }) => {
       const auth = req ? req.headers.authorization : null
       if (auth && auth.toLowerCase().startsWith('bearer ')) {
@@ -209,4 +227,4 @@ const startApolloServer = (async (typeDefs, resolvers) => {
 
   await new Promise(resolve => httpServer.listen({ port: 4000 }, resolve))
   console.log(`Server ready at http://localhost:4000${server.graphqlPath}`)
-})(typeDefs, resolvers)
+})()
