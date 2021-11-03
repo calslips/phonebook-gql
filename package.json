@@ -19,13 +19,15 @@
   },
   "homepage": "https://github.com/calslips/phonebook-gql#readme",
   "dependencies": {
+    "@graphql-tools/schema": "^8.3.1",
     "apollo-server-core": "^3.4.0",
     "apollo-server-express": "^3.4.0",
     "express": "^4.17.1",
     "graphql": "^15.7.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.13.8",
-    "mongoose-unique-validator": "^2.0.3"
+    "mongoose-unique-validator": "^2.0.3",
+    "subscriptions-transport-ws": "^0.11.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.14"
