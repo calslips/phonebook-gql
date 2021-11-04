@@ -10,6 +10,9 @@ const mongoose = require('mongoose')
 const Person = require('./models/person')
 const User = require('./models/user')
 
+const { PubSub } = require('graphql-subscriptions')
+const pubsub = new PubSub()
+
 const { MONGODB_URI } = require('./config')
 const JWT_SECRET = 'INSERT_SECRET_KEY'
 
@@ -85,6 +88,10 @@ const typeDefs = gql`
       name: String!
     ): User
   }
+
+  type Subscription {
+    personAdded: Person!
+  }
 `
 
 const resolvers = {
@@ -125,6 +132,8 @@ const resolvers = {
           invalidArgs: args
         })
       }
+      pubsub.publish('PERSON_ADDED', { personAdded: person })
+
       return person
     },
     editNumber: async (root, args) => {
@@ -180,6 +189,11 @@ const resolvers = {
       await currentUser.save()
       return currentUser
     }
+  },
+  Subscription: {
+    personAdded: {
+      subscribe: () => pubsub.asyncIterator(['PERSON_ADDED'])
+    }
   }
 };
 
@@ -191,7 +205,7 @@ const startApolloServer = (async () => {
 
   const subscriptionServer = SubscriptionServer.create(
     { schema, execute, subscribe },
-    { server: httpServer, path: '/'}
+    { server: httpServer, path: '/' }
   )
 
   const server = new ApolloServer({
